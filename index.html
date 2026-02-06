@@ -410,10 +410,15 @@
         key: 'c', 
         topic: "Thermodynamics", 
         q: "The process work in a steady flow process can be computed by", 
-        options: {a: "-ĺpdv", b: "(pdv", c: "-ĺvdp", d: "fvdp"}, 
-        ans: "-ĺvdp", 
-        soln: "Flow work formula.", 
-        caltech: null 
+        options: {
+            a: "-∫pdv", 
+            b: "∫pdv", 
+            c: "-∫vdp", 
+            d: "∫vdp"
+        }, 
+        ans: "-∫vdp", 
+        soln: "Steady flow work (open system) is given by -∫vdp. This represents the area projected on the pressure axis of a P-V diagram. Option (b) ∫pdv is only for non-flow/closed systems.", 
+        caltech: "Input the function v(p) into the integral tool: (-) -> [∫] -> [v(p)] -> [p1] -> [p2]." 
     },
     { 
         id: 25, 
@@ -847,3 +852,4 @@
     </script>
 </body>
 </html>
+
