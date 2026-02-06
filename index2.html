@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIP Close Door Exam | Engr. HUD v8.0</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff9d;
+            --neon-red: #ff0055;
+            --dark-bg: #0a0a0f;
+            --panel-bg: #13131f;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* --- LANDING PAGE --- */
+        #landing-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--dark-bg);
+            z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-image: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .glitch-text {
+            font-size: 3.5rem; font-weight: bold; color: white;
+            text-shadow: 0 0 10px var(--neon-cyan);
+            letter-spacing: 4px; text-align: center;
+            animation: flicker 2s infinite alternate;
+        }
+
+        .start-btn {
+            margin-top: 40px; padding: 15px 40px;
+            background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            transition: all 0.3s;
+        }
+        .start-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); }
+
+        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+        /* Hide main app initially */
+        #main-app { display: none; opacity: 0; transition: opacity 1s ease; }
+
+        /* --- UI COMPONENTS --- */
+        .cyber-card {
+            background: var(--panel-bg); border: 1px solid #333;
+            position: relative; overflow: hidden; transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .cyber-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--neon-cyan); opacity: 0.5; transition: opacity 0.3s;
+        }
+        .cyber-card.correct::before { background: var(--neon-green); opacity: 1; }
+        .cyber-card.wrong::before { background: var(--neon-red); opacity: 1; }
+        .cyber-card:hover { transform: translateY(-2px); border-color: var(--neon-cyan); }
+
+        /* Options */
+        .opt-container { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .opt-btn {
+            width: 100%; padding: 12px 16px; border: 1px solid #444; background: #1a1a24; color: #aaa;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.95em;
+            display: flex; align-items: center; gap: 12px; cursor: pointer;
+            transition: all 0.2s; border-radius: 6px; text-align: left;
+        }
+        .opt-letter { font-weight: bold; color: #666; min-width: 24px; text-align: center; border-right: 1px solid #444; padding-right: 12px; }
+        .opt-btn:hover { border-color: var(--neon-cyan); background: #222230; }
+        .opt-btn.selected { background: rgba(0, 243, 255, 0.1); border-color: var(--neon-cyan); color: white; }
+        
+        .opt-btn.correct-ans { background: rgba(0, 255, 157, 0.15); border-color: var(--neon-green); color: white; }
+        .opt-btn.correct-ans .opt-letter { color: var(--neon-green); border-color: var(--neon-green); }
+        .opt-btn.wrong-ans { background: rgba(255, 0, 85, 0.15); border-color: var(--neon-red); color: white; }
+        .opt-btn.wrong-ans .opt-letter { color: var(--neon-red); border-color: var(--neon-red); }
+        .opt-btn.dimmed { opacity: 0.4; pointer-events: none; }
+
+        /* CalTech Keys */
+        .key { display: inline-block; padding: 2px 6px; margin: 0 2px; border-radius: 4px; background: #2d2d3a; border-bottom: 2px solid #1a1a24; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+        .key.action { background: #cf3f3f; border-color: #8a1c1c; }
+        .key.func { background: #2f5fcf; border-color: #1a3a8a; }
+
+        /* Dashboard */
+        .mode-switch { background: #1a1a24; border: 1px solid #333; padding: 4px; border-radius: 8px; display: flex; gap: 4px; }
+        .mode-btn { padding: 6px 12px; border-radius: 4px; font-size: 0.75em; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .mode-btn.active { background: var(--neon-pink); color: white; box-shadow: 0 0 10px rgba(255, 0, 255, 0.4); }
+        .mode-btn.inactive { color: #666; }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <div id="landing-page">
+        <div class="glitch-text">CLOSE DOOR<br>SESSION DETECTED</div>
+        <p class="text-gray-400 mt-4 font-mono tracking-widest text-sm">LOADING CONFIDENTIAL DATASET...</p>
+        <button class="start-btn" onclick="enterSystem()">ACCESS SYSTEM</button>
+    </div>
+
+    <div id="main-app">
+        <header class="sticky top-0 z-50 backdrop-blur-md border-b border-gray-800 bg-[#0a0a0f]/95 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-wider text-white">
+                        <span class="text-[#00f3ff]">BOARD</span>MATH <span class="text-xs border border-[#00f3ff] px-1 rounded text-[#00f3ff]">CLOSE-DOOR</span>
+                    </h1>
+                </div>
+                <div class="flex gap-4 items-center overflow-x-auto">
+                    <div class="mode-switch">
+                        <div id="btn-review" class="mode-btn active" onclick="setMode('review')">STUDY</div>
+                        <div id="btn-practice" class="mode-btn inactive" onclick="setMode('practice')">PRACTICE</div>
+                        <div id="btn-exam" class="mode-btn inactive" onclick="setMode('exam')">EXAM</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div id="practice-dashboard" class="hidden mb-6 p-4 rounded bg-gray-900/50 border-l-4 border-purple-500 flex justify-between items-center">
+                <div>
+                    <h2 class="text-purple-400 font-bold uppercase text-sm mb-1">PRACTICE ACTIVE</h2>
+                    <p class="text-gray-400 text-xs">Instant feedback enabled.</p>
+                </div>
+                <button onclick="resetPractice()" class="px-4 py-1 bg-purple-900/50 hover:bg-purple-800 text-purple-200 text-xs font-bold rounded border border-purple-500/30">RESET</button>
+            </div>
+
+            <div id="exam-dashboard" class="hidden mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="cyber-card p-4 rounded flex flex-col justify-center bg-gray-900/50 border-yellow-500/30">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-gray-400 text-xs uppercase">Status</div>
+                        <div id="exam-status" class="text-sm font-bold text-yellow-500">RUNNING</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="submitExam()" id="submit-btn" class="flex-1 px-4 py-2 bg-[#00f3ff] hover:bg-[#00c2cc] text-black font-bold rounded text-sm">SUBMIT</button>
+                        <button onclick="resetExam()" id="reset-btn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded text-sm">RESET</button>
+                    </div>
+                </div>
+                <div class="cyber-card p-4 rounded bg-gray-900/50 flex flex-col justify-center">
+                    <div class="text-gray-400 text-xs uppercase">Score</div>
+                    <div class="text-3xl font-bold text-white font-mono flex items-end gap-2">
+                        <span id="score-display" class="text-[#00f3ff]">--</span> 
+                        <span class="text-gray-500 text-lg mb-1">/ 50</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="questions-container" class="grid grid-cols-1 gap-6"></div>
+        </div>
+    </div>
+
+    <script>
+        function enterSystem() {
+            const landing = document.getElementById('landing-page');
+            const app = document.getElementById('main-app');
+            landing.style.opacity = '0';
+            setTimeout(() => { landing.style.display = 'none'; app.style.display = 'block'; void app.offsetWidth; app.style.opacity = '1'; }, 500);
+        }
+
+        // === CLOSE DOOR DATABASE ===
+        const questions = [
+    { 
+        id: 1, 
+        key: 'b', 
+        topic: "Engineering Economy", 
+        q: "A man borrowed P20,000 from a local commercial bank which has a simple interest of 16%, but the interest is to be deducted from the loan at the time that the money was borrowed and the loan is payable at the end of the year. How much is the actual rate of interest?", 
+        options: {a: "19.5%", b: "19.05%", c: "19.32%", d: "19.75%"}, 
+        ans: "19.05%", 
+        soln: "Interest I = 20k(0.16) = 3200. Recieved = 16800. Rate = 3200/16800.", 
+        caltech: "<span class='key'>3200</span> <span class='key'>÷</span> <span class='key'>16800</span>" 
+    },
+    { 
+        id: 2, 
+        key: 'b', 
+        topic: "Annuity", 
+        q: "Mr. Cruz plans to deposit for the education of his 5-year old son. P500 at the end of each month for 10 years at 12% annual interest compounded monthly. The amount that will be available in two years is:", 
+        options: {a: "P13,864.70", b: "P13,486.70", c: "P13,468.70", d: "P13,470.86"}, 
+        ans: "P13,486.70", 
+        soln: "F = A[((1+i)^n - 1)/i]. n=24, i=1%.", 
+        caltech: "<span class='key'>500</span> <span class='key'>(</span> <span class='key'>1.01</span> <span class='key'>^</span> <span class='key'>24</span> <span class='key'>-</span> <span class='key'>1</span> <span class='key'>)</span> <span class='key'>÷</span> <span class='key'>0.01</span>" 
+    },
+    { 
+        id: 3, 
+        key: 'b', 
+        topic: "Effective Rate", 
+        q: "Compute the equivalent rate of 6% compounded semi-annually to a rate compounded quarterly.", 
+        options: {a: "4.96%", b: "5.96%", c: "5.06%", d: "5.09%"}, 
+        ans: "5.96%", 
+        soln: "(1 + 0.06/2)^2 = (1 + r/4)^4.", 
+        caltech: "Input: <span class='key'>(</span> <span class='key'>1.03</span> <span class='key'>)</span> <span class='key'>^</span> <span class='key'>2</span> <span class='key action'>=</span> <span class='key'>(</span> <span class='key'>1</span> <span class='key'>+</span> <span class='key action'>X</span> <span class='key'>÷</span> <span class='key'>4</span> <span class='key'>)</span> <span class='key'>^</span> <span class='key'>4</span>. <span class='key action'>Shift</span> <span class='key func'>Solve</span>." 
+    },
+    { 
+        id: 4, 
+        key: 'd', 
+        topic: "Time Value", 
+        q: "How long (years) will it take money to quadruple if it earns 7% compounded semi-annually?", 
+        options: {a: "22.15", b: "25.15", c: "21.15", d: "20.15"}, 
+        ans: "20.15", 
+        soln: "4 = (1.035)^(2t).", 
+        caltech: "<span class='key'>ln</span> <span class='key'>4</span> <span class='key'>÷</span> <span class='key'>ln</span> <span class='key'>1.035</span> <span class='key'>÷</span> <span class='key'>2</span>" 
+    },
+    { 
+        id: 5, 
+        key: 'a', 
+        topic: "Compound Interest", 
+        q: "For a loan acquired six years ago, a man paid out the amount of P75,000. The interest was compounded at 18% compounded annually. How much was the borrowed amount?", 
+        options: {a: "P27,782.36", b: "P27,872.36", c: "P28,772.36", d: "P27,728.36"}, 
+        ans: "P27,782.36", 
+        soln: "P = F(1+i)^-n = 75000(1.18)^-6.", 
+        caltech: "<span class='key'>75000</span> <span class='key'>×</span> <span class='key'>1.18</span> <span class='key'>^</span> <span class='key'>-6</span>" 
+    },
+    { 
+        id: 6, 
+        key: 'b', 
+        topic: "Amortization", 
+        q: "A debt of P10,000 with 10% interest compounded semi-annually is to be amortized by semi-annual payments over the next 5 years. The first due is 6 months. Determine the semi-annual payments.", 
+        options: {a: "P1,925.05", b: "P1,295.05", c: "P1,529.05", d: "P1,259.05"}, 
+        ans: "P1,295.05", 
+        soln: "A = P(A/P, 5%, 10).", 
+        caltech: "<span class='key'>10000</span> <span class='key'>÷</span> <span class='key'>((1 - 1.05^-10)/0.05)</span>" 
+    },
+    { 
+        id: 7, 
+        key: 'd', 
+        topic: "Continuous Comp", 
+        q: "Six hundred pesos is deposited each year into a savings bank account that pays 6% nominal interest, compounded continuously. How much will be in the account at the end of 8 years?", 
+        options: {a: "P5,797.77", b: "P7,597.77", c: "P5,779.77", d: "P5,977.77"}, 
+        ans: "P5,977.77", 
+        soln: "F = A(e^rn - 1)/(e^r - 1).", 
+        caltech: "<span class='key'>600</span> <span class='key'>(</span> <span class='key func'>e</span> <span class='key'>^</span> <span class='key'>0.48</span> <span class='key'>-</span> <span class='key'>1</span> <span class='key'>)</span> <span class='key'>÷</span> <span class='key'>(</span> <span class='key func'>e</span> <span class='key'>^</span> <span class='key'>0.06</span> <span class='key'>-</span> <span class='key'>1</span> <span class='key'>)</span>" 
+    },
+    { 
+        id: 8, 
+        key: 'a', 
+        topic: "Depreciation", 
+        q: "The cost of equipment is P500,000 and the cost of installation is P30,000. If the salvage value is 10% of the cost of equipment at the end of 5 years, determine the book value at the end of the fourth year. Use straight line method.", 
+        options: {a: "P146,000", b: "P164,000", c: "P140,600", d: "P160,400"}, 
+        ans: "P146,000", 
+        soln: "Total Cost 530k. Salvage 50k. d=(480)/5=96k. BV4 = 530 - 4(96).", 
+        caltech: "<span class='key'>530</span> <span class='key'>-</span> <span class='key'>4</span> <span class='key'>×</span> <span class='key'>96</span>" 
+    },
+    { 
+        id: 9, 
+        key: 'a', 
+        topic: "Econ Terms", 
+        q: "It is the element of value which a business has earned through the favorable consideration and patronage of its customers.", 
+        options: {a: "goodwill value", b: "utility value", c: "franchise value", d: "fair value"}, 
+        ans: "goodwill value", 
+        soln: "Definition.", 
+        caltech: null 
+    },
+    { 
+        id: 10, 
+        key: 'd', 
+        topic: "Econ Terms", 
+        q: "It is defined to be the capacity of a commodity to satisfy human want.", 
+        options: {a: "demand", b: "benefit", c: "value", d: "utility"}, 
+        ans: "utility", 
+        soln: "Definition.", 
+        caltech: null 
+    },
+    { 
+        id: 11, 
+        key: 'c', 
+        topic: "Depreciation", 
+        q: "It is a method of depreciation where a property can never depreciate to zero value.", 
+        options: {a: "straight line", b: "sinking fund", c: "Matheson", d: "SYD"}, 
+        ans: "Matheson", 
+        soln: "Declining balance never hits zero.", 
+        caltech: null 
+    },
+    { 
+        id: 12, 
+        key: 'c', 
+        topic: "Econ Terms", 
+        q: "It is anything of value that is owned by a person or an enterprise.", 
+        options: {a: "liabilities", b: "capital", c: "asset", d: "consumer goods"}, 
+        ans: "asset", 
+        soln: "Definition.", 
+        caltech: null 
+    },
+    { 
+        id: 13, 
+        key: 'a', 
+        topic: "Compound Factor", 
+        q: "If a sum of money tripled after 3 years, what is the 'single payment compound factor'?", 
+        options: {a: "3", b: "9", c: "1/3", d: "1/9"}, 
+        ans: "3", 
+        soln: "Factor is (1+i)^n = F/P = 3.", 
+        caltech: null 
+    },
+    { 
+        id: 14, 
+        key: 'b', 
+        topic: "Profit", 
+        q: "A bought a device then sold it to B for a profit of 40%. B sold the device to C for a profit of 20%. If C paid P2,856 more it cost A. How much did A bought the device?", 
+        options: {a: "P2,040", b: "P4,200", c: "P2,400", d: "P4,020"}, 
+        ans: "P4,200", 
+        soln: "C = 1.4(1.2)A = 1.68A. 1.68A - A = 2856. A = 2856/0.68.", 
+        caltech: "<span class='key'>2856</span> <span class='key'>÷</span> <span class='key'>0.68</span>" 
+    },
+    { 
+        id: 15, 
+        key: 'b', 
+        topic: "Sinking Fund", 
+        q: "Find the annual payment to extinguish a debt of P10,000 if it is payable in 5 years at 12%.", 
+        options: {a: "P2,870.10", b: "P2,774.10", c: "P3,810.32", d: "P4,213.42"}, 
+        ans: "P2,774.10", 
+        soln: "Amortization. A = 10000(A/P, 12%, 5).", 
+        caltech: "<span class='key'>10000</span> <span class='key'>÷</span> <span class='key'>((1-1.12^-5)/0.12)</span>" 
+    },
+    { 
+        id: 16, 
+        key: 'a', 
+        topic: "Thermodynamics", 
+        q: "The volume of a gas under standard atmospheric pressure, 76 cm Hg, is 200 in². What is the volume when pressure is 80 cm Hg, if the temperature is unchanged, in³?", 
+        options: {a: "190", b: "110", c: "90", d: "30.4"}, 
+        ans: "190", 
+        soln: "P1V1 = P2V2. 76(200)/80.", 
+        caltech: "<span class='key'>76</span> <span class='key'>×</span> <span class='key'>200</span> <span class='key'>÷</span> <span class='key'>80</span>" 
+    },
+    { 
+        id: 17, 
+        key: 'c', 
+        topic: "Temperature", 
+        q: "Two thermometers, one calibrated in Celsius and the other in Fahrenheit, are used to measure the same temperature. The numerical reading obtained on the Fahrenheit thermometer is-", 
+        options: {a: "greater than that obtained on the Celsius thermometer", b: "less than that obtained on the Celsius thermometer", c: "may be greater or less than that obtained on the Celsius thermometer", d: "all of the above"}, 
+        ans: "may be greater or less than that obtained on the Celsius thermometer", 
+        soln: "F=C at -40. F>C above -40. F<C below -40.", 
+        caltech: null 
+    },
+    { 
+        id: 18, 
+        key: 'd', 
+        topic: "Missing Q", 
+        q: "[QUESTION MISSING FROM SOURCE FILE]", 
+        options: {a: "N/A", b: "N/A", c: "N/A", d: "N/A"}, 
+        ans: "N/A", 
+        soln: "Data missing.", 
+        caltech: null 
+    },
+    { 
+        id: 19, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "An air has an initial pressure of 100 kPa absolute and volume of 1 m³. If the pressure will be increased to 120 kPa, find the new volume, in m².", 
+        options: {a: "1.2", b: "0.83", c: "0.63", d: "1.5"}, 
+        ans: "0.83", 
+        soln: "P1V1=P2V2. 100(1)/120.", 
+        caltech: "<span class='key'>100</span> <span class='key'>÷</span> <span class='key'>120</span>" 
+    },
+    { 
+        id: 20, 
+        key: 'a', 
+        topic: "Thermodynamics", 
+        q: "In the study of thermodynamics, a working substance is a substance where energy can be added or extracted. Dry air which is composed of oxygen and nitrogen is considered as,", 
+        options: {a: "ideal gas", b: "pure substance", c: "gas-vapor mixture", d: "all of the above"}, 
+        ans: "ideal gas", 
+        soln: "Standard engineering assumption.", 
+        caltech: null 
+    },
+    { 
+        id: 21, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "Adiabatic means", 
+        options: {a: "no work", b: "no heat", c: "constant temperature", d: "constant pressure"}, 
+        ans: "no heat", 
+        soln: "Q = 0.", 
+        caltech: null 
+    },
+    { 
+        id: 22, 
+        key: 'd', 
+        topic: "Thermodynamics", 
+        q: "A reversible adiabatic process is", 
+        options: {a: "isobaric", b: "isothermal", c: "isometric", d: "isentropic"}, 
+        ans: "isentropic", 
+        soln: "Constant entropy.", 
+        caltech: null 
+    },
+    { 
+        id: 23, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "In the study of thermodynamics, a piston-cylinder assembly is considered what type of thermodynamic system", 
+        options: {a: "open system", b: "closed system", c: "isolated system", d: "all of the above"}, 
+        ans: "closed system", 
+        soln: "Fixed mass.", 
+        caltech: null 
+    },
+    { 
+        id: 24, 
+        key: 'c', 
+        topic: "Thermodynamics", 
+        q: "The process work in a steady flow process can be computed by", 
+        options: {a: "-ĺpdv", b: "(pdv", c: "-ĺvdp", d: "fvdp"}, 
+        ans: "-ĺvdp", 
+        soln: "Flow work formula.", 
+        caltech: null 
+    },
+    { 
+        id: 25, 
+        key: 'a', 
+        topic: "Thermodynamics", 
+        q: "For an isentropic process, the relationship between initial (1) volume and temperature to the final (2) volume and temperature, and k as specific heat ratio is", 
+        options: {a: "T1/T2=(V2/V1)^(k-1)", b: "T1/T2=(V2/V1)^(1-k)", c: "T1/T2=(V1/V2)^(k-1)", d: "T2/T1=(V2/V1)^(k-1)"}, 
+        ans: "T1/T2=(V2/V1)^(k-1)", 
+        soln: "Adiabatic relation.", 
+        caltech: null 
+    },
+    { 
+        id: 26, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "A gas has an initial pressure of 101 kPa and temperature of 327K. It undergoes a constant volume process until its final temperature is 300 K. What is the final pressure in kPa?", 
+        options: {a: "69.92", b: "92.66", c: "96.62", d: "66.92"}, 
+        ans: "92.66", 
+        soln: "P1/T1 = P2/T2. 101(300)/327.", 
+        caltech: "<span class='key'>101</span> <span class='key'>×</span> <span class='key'>300</span> <span class='key'>÷</span> <span class='key'>327</span>" 
+    },
+    { 
+        id: 27, 
+        key: 'd', 
+        topic: "Physics", 
+        q: "An object weighing 5 N falls from rest at a height of 100 m. What is its kinetic energy at a height of 30 m, in N-m?", 
+        options: {a: "300", b: "500", c: "150", d: "350"}, 
+        ans: "350", 
+        soln: "Fell 70m. Work = F*d = 5*70 = 350.", 
+        caltech: "<span class='key'>5</span> <span class='key'>×</span> <span class='key'>70</span>" 
+    },
+    { 
+        id: 28, 
+        key: 'c', 
+        topic: "Thermodynamics", 
+        q: "Five kg of a gas initially at a temperature of 23K is heated until it temperature is 70 K. What is the work, KJ", 
+        options: {a: "235", b: "352", c: "0", d: "47"}, 
+        ans: "0", 
+        soln: "Implies constant volume (rigid tank) heating.", 
+        caltech: null 
+    },
+    { 
+        id: 29, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "Twenty grams of oxygen gas (O2) are compressed at constant temperature of 30°C to 5% of its original volume. Find the work done on the system.", 
+        options: {a: "944 cal", b: "1124 cal", c: "924 cal", d: "1144 cal"}, 
+        ans: "1124 cal", 
+        soln: "W = nRT ln(V2/V1). n=0.625. R=1.987. T=303.", 
+        caltech: "<span class='key'>0.625</span> <span class='key'>×</span> <span class='key'>1.987</span> <span class='key'>×</span> <span class='key'>303</span> <span class='key'>×</span> <span class='key'>ln</span> <span class='key'>0.05</span>" 
+    },
+    { 
+        id: 30, 
+        key: 'd', 
+        topic: "Power", 
+        q: "A device produces 37.5 joules per cycle. There is one power stroke per cycle. Calculate the power output if the device is run at 45 rpm.", 
+        options: {a: "4.69 W", b: "26.125 W", c: "27.56 W", d: "14.063 W"}, 
+        ans: "14.063 W", 
+        soln: "Likely 4-stroke (power every 2 revs). P = 37.5 * (45/60) / 2.", 
+        caltech: "<span class='key'>37.5</span> <span class='key'>×</span> <span class='key'>45</span> <span class='key'>÷</span> <span class='key'>120</span>" 
+    },
+    { 
+        id: 31, 
+        key: 'd', 
+        topic: "Thermodynamics", 
+        q: "A gas is enclosed in a cylinder with a weighted piston as the top boundary. The gas is heated and expands from a volume of 0.04 m³ at a constant pressure of 200 kPa. Find the work done on the system.", 
+        options: {a: "6 kJ", b: "10 kJ", c: "14 kJ", d: "12 kJ"}, 
+        ans: "12 kJ", 
+        soln: "Missing V2 data. Assuming V2=0.10 based on options logic P(dV) = 12.", 
+        caltech: null 
+    },
+    { 
+        id: 32, 
+        key: 'b', 
+        topic: "Chemistry", 
+        q: "Two-third of the atom in a molecule of water is hydrogen. What percentage weight of a water molecule if the weight of two hydrogen atoms? The atomic weight of hydrogen is 1.008 g/mole and oxygen is 16.00 g/mole?", 
+        options: {a: "19.2", b: "11.19", c: "19.11", d: "12.19"}, 
+        ans: "11.19", 
+        soln: "2(1.008) / 18.016.", 
+        caltech: "<span class='key'>2.016</span> <span class='key'>÷</span> <span class='key'>18.016</span> <span class='key'>%</span>" 
+    },
+    { 
+        id: 33, 
+        key: 'b', 
+        topic: "Thermodynamics", 
+        q: "A cylinder contains oxygen at a pressure of 10 atm and a temperature of 300 K. The volume of the cylinder is 10 L. What is the mass of oxygen in grams? MW of oxygen is 32 g/mole.", 
+        options: {a: "125.02", b: "130.08", c: "135.05", d: "120.04"}, 
+        ans: "130.08", 
+        soln: "m = PVM/RT = 10*10*32 / (0.0821*300).", 
+        caltech: "<span class='key'>100</span> <span class='key'>×</span> <span class='key'>32</span> <span class='key'>÷</span> <span class='key'>24.63</span>" 
+    },
+    { 
+        id: 34, 
+        key: 'a', 
+        topic: "Chemistry", 
+        q: "When 0.5 g of liquid is completely evaporated and collected in liter manometer, the pressure is 0.25 atm and the temperature is 27°C. Assume ideal gas behavior, find the molecular weight if the gas constant is 0.0821 L atm/mole-K", 
+        options: {a: "49.2 g/mole", b: "12.3 g/mole", c: "2.2 g/mole", d: "64.0 g/mole"}, 
+        ans: "49.2 g/mole", 
+        soln: "MW = mRT/PV = 0.5(0.0821)(300) / (0.25*1).", 
+        caltech: "<span class='key'>0.5</span> <span class='key'>×</span> <span class='key'>24.63</span> <span class='key'>÷</span> <span class='key'>0.25</span>" 
+    },
+    { 
+        id: 35, 
+        key: 'd', 
+        topic: "Chemistry", 
+        q: "A 150 liters of a solution has a 5.5 M (molarity), what is the total moles of solute?", 
+        options: {a: "852", b: "828", c: "258", d: "825"}, 
+        ans: "825", 
+        soln: "5.5 * 150.", 
+        caltech: "<span class='key'>5.5</span> <span class='key'>×</span> <span class='key'>150</span>" 
+    },
+    { 
+        id: 36, 
+        key: 'a', 
+        topic: "Chemistry", 
+        q: "In 100 g of CO2, calculate the amount of oxygen in grams.", 
+        options: {a: "72.73", b: "27.37", c: "27.72", d: "72.27"}, 
+        ans: "72.73", 
+        soln: "32/44 * 100.", 
+        caltech: "<span class='key'>32</span> <span class='key'>÷</span> <span class='key'>44</span> <span class='key'>×</span> <span class='key'>100</span>" 
+    },
+    { 
+        id: 37, 
+        key: 'a', 
+        topic: "Chemistry", 
+        q: "A solution with 3.5 molarity used 50 kg of solvent, what is the moles of solute?", 
+        options: {a: "175", b: "157", c: "571", d: "517"}, 
+        ans: "175", 
+        soln: "3.5 * 50.", 
+        caltech: "<span class='key'>3.5</span> <span class='key'>×</span> <span class='key'>50</span>" 
+    },
+    { 
+        id: 38, 
+        key: 'd', 
+        topic: "Chemistry", 
+        q: "How many molecules are contained in 100 g of CH4?", 
+        options: {a: "7.36x10^23", b: "7.36x10^24", c: "3.76x10^23", d: "3.76x10^24"}, 
+        ans: "3.76x10^24", 
+        soln: "(100/16) * 6.022e23.", 
+        caltech: "<span class='key'>6.25</span> <span class='key'>×</span> <span class='key'>6.022</span> <span class='key'>EXP</span> <span class='key'>23</span>" 
+    },
+    { 
+        id: 39, 
+        key: 'c', 
+        topic: "Materials", 
+        q: "The ratio of stress to the corresponding strain below the proportional limit", 
+        options: {a: "stress-strain diagram", b: "modulus of rigidity", c: "modulus of elasticity", d: "tensile strength"}, 
+        ans: "modulus of elasticity", 
+        soln: "Young's Modulus definition.", 
+        caltech: null 
+    },
+    { 
+        id: 40, 
+        key: 'a', 
+        topic: "Mechanics", 
+        q: "The moment of inertia of a rectangular area whose base is 'b' and height 'h' about its neutral axis is", 
+        options: {a: "bh²/12 (Note: Typo in source, usually bh³/12)", b: "bh³/3", c: "b²h/12", d: "b³h/3"}, 
+        ans: "bh²/12", 
+        soln: "Centroidal axis formula.", 
+        caltech: null 
+    },
+    { 
+        id: 41, 
+        key: 'c', 
+        topic: "Mechanics", 
+        q: "It is the stress that depends on the bending moment of a member or part", 
+        options: {a: "tensile stress", b: "compressive stress", c: "flexural stress", d: "bearing stress"}, 
+        ans: "flexural stress", 
+        soln: "Definition.", 
+        caltech: null 
+    },
+    { 
+        id: 42, 
+        key: 'd', 
+        topic: "Thermodynamics", 
+        q: "An iron steam pipe is 200 ft long at 0°C. What will be its increase in length when heated to 100°C? Coefficient of linear expansion is 10x10^-6 per °C.", 
+        options: {a: "0.18 ft", b: "0.12 ft", c: "0.26 ft", d: "0.20 ft"}, 
+        ans: "0.20 ft", 
+        soln: "dL = 10e-6 * 200 * 100.", 
+        caltech: "<span class='key'>10</span> <span class='key'>EXP</span> <span class='key'>-6</span> <span class='key'>×</span> <span class='key'>20000</span>" 
+    },
+    { 
+        id: 43, 
+        key: 'd', 
+        topic: "Thermodynamics", 
+        q: "A steel railroad rails 10 m long are laid with clearance of 3 mm at a temperature of 15°C. At what temperature will the rails just touch? Assume alpha = 11.7 micro m/m°C and E=200 GPa.", 
+        options: {a: "46.90 deg", b: "56.06 deg", c: "50.36 deg", d: "40.64 deg"}, 
+        ans: "40.64 deg", 
+        soln: "dT = 0.003 / (11.7e-6 * 10) = 25.6. T = 15+25.6.", 
+        caltech: "<span class='key'>15</span> <span class='key'>+</span> <span class='key'>25.64</span>" 
+    },
+    { 
+        id: 44, 
+        key: 'b', 
+        topic: "Machine Design", 
+        q: "A 1.5 cm solid shaft rotates at 1800 rpm. If the allowable torsional shearing stress is 50 MPa, what power in kW the said shaft can transmit?", 
+        options: {a: "5.55", b: "6.24", c: "6.82", d: "8.23"}, 
+        ans: "6.24", 
+        soln: "T = tau*J/r. P = T*w.", 
+        caltech: "See solution." 
+    },
+    { 
+        id: 45, 
+        key: 'd', 
+        topic: "Mechanics", 
+        q: "A 14-ft simple beam uniformly loaded with 200 lbs per foot over its entire length. If the beam is 3.625 in wide and 7.625 in deep, what is the maximum bending stress, in psi?", 
+        options: {a: "7974", b: "8205", c: "6332", d: "1674"}, 
+        ans: "1674", 
+        soln: "M=wL^2/8. S=Mc/I.", 
+        caltech: "Calculated: 1674." 
+    },
+    { 
+        id: 46, 
+        key: 'd', 
+        topic: "Mechanics", 
+        q: "What is the stress in an 8-inch round x 16-inch high concrete cylinder (E=2.5x10^6 psi) when the unit deformation is 0.0012 inch/inch?", 
+        options: {a: "500 psi", b: "8100 psi", c: "210 psi", d: "3000 psi"}, 
+        ans: "3000 psi", 
+        soln: "Stress = E * strain.", 
+        caltech: "<span class='key'>2.5</span> <span class='key'>EXP</span> <span class='key'>6</span> <span class='key'>×</span> <span class='key'>0.0012</span>" 
+    },
+    { 
+        id: 47, 
+        key: 'a', 
+        topic: "Machine Design", 
+        q: "A 2.5 in diameter shaft is 2 ft long. Its maximum shear stress is 10,000 psi. What is the angular deflection in degrees?", 
+        options: {a: "0.96", b: "0.45", c: "0.78", d: "0.56"}, 
+        ans: "0.96 deg", 
+        soln: "Theta = TL/JG. G approx 12e6.", 
+        caltech: null 
+    },
+    { 
+        id: 48, 
+        key: 'a', 
+        topic: "Mechanics", 
+        q: "A simply supported beam is five meters in length. It carries a uniformly distributed load including its own weight of 300 N/m and a concentrated load of 100 N, 2 meters from the left end. Find the reactions if reaction A at the left end and reaction B at the right end.", 
+        options: {a: "RA=810 N, RB=700 N", b: "RA=820 N, RB=690 N", c: "RA=830 N, RB=680 N", d: "RA=840 N, RB=670 N"}, 
+        ans: "RA=810 N, RB=700 N", 
+        soln: "Sum M about B.", 
+        caltech: null 
+    },
+    { 
+        id: 49, 
+        key: 'd', 
+        topic: "Mechanics", 
+        q: "A 100 kg weight rests on a 30° inclined plane. Neglecting friction, how much pull must one exert to bring the weight up the incline?", 
+        options: {a: "86.67 kg", b: "100 kg", c: "70.71 kg", d: "50 kg"}, 
+        ans: "50 kg", 
+        soln: "F = W sin(30).", 
+        caltech: "<span class='key'>100</span> <span class='key'>sin</span> <span class='key'>30</span>" 
+    },
+    { 
+        id: 50, 
+        key: 'b', 
+        topic: "Mechanics", 
+        q: "A certain cable is suspended between two supports at the same elevation and 500 ft apart. The load is 500 lbs per horizontal foot including the weight of the cable. The sag of the cable is 30 ft. Calculate the total length of the cable, in ft.", 
+        options: {a: "503.21", b: "504.76", c: "505.12", d: "506.03"}, 
+        ans: "504.76 ft", 
+        soln: "Parabolic approx formula.", 
+        caltech: "<span class='key'>500</span> <span class='key'>+</span> <span class='key'>8</span><span class='key'>×</span><span class='key'>30</span><span class='key'>²</span> <span class='key'>÷</span> <span class='key'>(3×500)</span>" 
+    }
+];
+
+        let currentMode = 'review';
+        let userAnswers = {};
+        let practiceAttempts = {}; 
+        let examSubmitted = false;
+
+        const container = document.getElementById('questions-container');
+        const examDashboard = document.getElementById('exam-dashboard');
+        const practiceDashboard = document.getElementById('practice-dashboard');
+        const scoreDisplay = document.getElementById('score-display');
+        const examStatus = document.getElementById('exam-status');
+        const submitBtn = document.getElementById('submit-btn');
+
+        function setMode(mode) {
+            currentMode = mode;
+            ['review', 'practice', 'exam'].forEach(m => {
+                document.getElementById(`btn-${m}`).className = `mode-btn ${mode === m ? 'active' : 'inactive'}`;
+            });
+            examDashboard.classList.toggle('hidden', mode !== 'exam');
+            practiceDashboard.classList.toggle('hidden', mode !== 'practice');
+            renderQuestions();
+        }
+
+        function resetExam() {
+            userAnswers = {};
+            examSubmitted = false;
+            examStatus.innerText = "RUNNING";
+            examStatus.classList.replace('text-[#00ff9d]', 'text-yellow-500');
+            scoreDisplay.innerText = "--";
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = false;
+            renderQuestions();
+        }
+        
+        function resetPractice() {
+            practiceAttempts = {};
+            renderQuestions();
+        }
+
+        function selectExamOption(qId, option) {
+            if (examSubmitted) return;
+            userAnswers[qId] = option;
+            renderQuestions();
+        }
+
+        function selectPracticeOption(qId, option) {
+            if (practiceAttempts[qId]) return;
+            const q = questions.find(item => item.id === qId);
+            practiceAttempts[qId] = { selected: option, isCorrect: option === q.key };
+            renderQuestions();
+        }
+
+        function submitExam() {
+            if (examSubmitted) return;
+            examSubmitted = true;
+            let score = 0;
+            questions.forEach(q => { if (userAnswers[q.id] === q.key) score++; });
+            scoreDisplay.innerText = score;
+            examStatus.innerText = "COMPLETED";
+            examStatus.classList.replace('text-yellow-500', 'text-[#00ff9d]');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = true;
+            renderQuestions();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderQuestions() {
+            container.innerHTML = '';
+            questions.forEach(item => {
+                const isExam = currentMode === 'exam';
+                const isPractice = currentMode === 'practice';
+                const hasCalTech = item.caltech ? true : false;
+                
+                let cardClass = 'cyber-card rounded-lg p-6 flex flex-col gap-4';
+                if (isExam && examSubmitted) {
+                    const sel = userAnswers[item.id];
+                    if (sel === item.key) cardClass += ' correct';
+                    else if (sel) cardClass += ' wrong';
+                }
+                if (isPractice && practiceAttempts[item.id]) {
+                    if (practiceAttempts[item.id].isCorrect) cardClass += ' correct';
+                    else cardClass += ' wrong';
+                }
+
+                const caltechBadge = hasCalTech ? 
+                    `<span class="bg-gray-800 border border-[#00f3ff] text-[#00f3ff] text-xs px-2 py-1 rounded font-mono flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-[#00f3ff] animate-pulse"></span> CALTECH
+                    </span>` : '';
+
+                let html = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl font-bold text-gray-700 font-mono">#${item.id}</span>
+                            <span class="text-xs text-[#ff00ff] border border-[#ff00ff] px-2 rounded uppercase tracking-wider">${item.topic}</span>
+                        </div>
+                        ${(currentMode !== 'exam' && hasCalTech) ? caltechBadge : ''}
+                    </div>
+                    <div class="text-lg font-medium text-gray-200">${item.q}</div>`;
+
+                if (isExam || isPractice) {
+                    html += `<div class="opt-container">`;
+                    ['a','b','c','d'].forEach(key => {
+                        let btnClass = 'opt-btn';
+                        let onclick = '';
+
+                        if (isExam) {
+                            onclick = `selectExamOption(${item.id}, '${key}')`;
+                            const sel = userAnswers[item.id];
+                            if (examSubmitted) {
+                                if (key === item.key) btnClass += ' correct-ans';
+                                else if (sel === key) btnClass += ' wrong-ans';
+                                else btnClass += ' dimmed';
+                            } else if (sel === key) btnClass += ' selected';
+                        } 
+                        else if (isPractice) {
+                            onclick = `selectPracticeOption(${item.id}, '${key}')`;
+                            const attempt = practiceAttempts[item.id];
+                            if (attempt) {
+                                if (key === item.key) btnClass += ' correct-ans';
+                                else if (attempt.selected === key) btnClass += ' wrong-ans';
+                                else btnClass += ' dimmed';
+                            }
+                        }
+                        html += `<div onclick="${onclick}" class="${btnClass}">
+                            <div class="opt-letter">${key.toUpperCase()}</div>
+                            <div class="flex-1">${item.options[key] || "Option "+key}</div>
+                        </div>`;
+                    });
+                    html += `</div>`;
+
+                    const showSoln = (isExam && examSubmitted) || (isPractice && practiceAttempts[item.id]);
+                    if (showSoln) {
+                        html += `
+                        <div class="mt-4 pt-4 border-t border-gray-800 text-sm animate-fade-in">
+                            <div class="text-gray-300 bg-gray-900/80 p-3 rounded border-l-2 border-[#00ff9d]">
+                                <div class="text-[#00ff9d] text-xs font-bold mb-1">SOLUTION:</div>
+                                ${item.soln}
+                            </div>
+                            ${item.caltech ? `<div class="mt-2 bg-[#1a1a24] p-2 rounded border border-gray-700 font-mono text-xs text-gray-400">⌨️ ${item.caltech}</div>` : ''}
+                        </div>`;
+                    }
+                } else {
+                    html += `
+                        <div class="mt-2 p-3 bg-black/40 border-l-2 border-yellow-500 text-yellow-500 font-mono text-sm">
+                            ANSWER: ${item.ans} <span class="text-gray-500 text-xs ml-2">[Option ${item.key.toUpperCase()}]</span>
+                        </div>
+                        <button onclick="document.getElementById('soln-${item.id}').classList.toggle('hidden')" 
+                            class="mt-auto w-full py-2 bg-[#1f1f2e] hover:bg-[#2d2d3a] text-gray-300 text-sm font-bold uppercase tracking-widest transition-colors border-t border-gray-700 flex justify-center items-center gap-2">
+                            <span>View Protocol</span>
+                        </button>
+                        <div id="soln-${item.id}" class="hidden pt-4 border-t border-gray-800 space-y-4">
+                            <div class="text-gray-400 text-sm">
+                                <strong class="text-[#00f3ff]">SOLUTION:</strong><br>
+                                <div class="mt-2">${item.soln}</div>
+                            </div>
+                            ${item.caltech ? `<div class="bg-[#1a1a24] p-3 rounded border border-gray-700 font-mono text-sm text-gray-300 leading-8">${item.caltech}</div>` : ''}
+                        </div>`;
+                }
+
+                const el = document.createElement('div');
+                el.className = cardClass;
+                el.innerHTML = html;
+                container.appendChild(el);
+            });
+            if(window.MathJax) MathJax.typesetPromise();
+        }
+
+        renderQuestions();
+    </script>
+</body>
+</html>
